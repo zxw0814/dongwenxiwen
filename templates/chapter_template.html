@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__ · 交互式地理课件初稿</title>
+<style>
+:root{--bg:#050d15;--panel:#0b1723;--line:rgba(120,180,220,.16);--text:#dbe7f0;--muted:#7d95a8;--yellow:#ffd24a;--cyan:#49d6c5;--red:#ff6b6b}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:13px/1.6 "PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
+.app{display:grid;grid-template-columns:220px 1fr 300px;height:100vh}
+.rail{background:linear-gradient(180deg,#07121d,#050d15);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+.badge{display:inline-block;font:10px/1 monospace;letter-spacing:.14em;background:var(--yellow);color:#04121a;padding:4px 7px;border-radius:2px}
+.rail h1{font-family:"Songti SC","SimSun",serif;font-size:20px;margin:10px 0 2px;line-height:1.35}
+.rail p{margin:0;color:var(--muted);font-size:10px;line-height:1.6}
+#steps{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.step{border:1px solid transparent;background:none;color:var(--muted);text-align:left;padding:8px 9px;border-radius:3px;cursor:pointer;display:flex;gap:7px;font-size:12px}
+.step:hover{background:rgba(73,214,197,.05);color:var(--text)}
+.step.active{border-color:rgba(255,210,74,.55);background:rgba(255,210,74,.07);color:var(--text)}
+.step .n{font:10px/1.8 monospace;color:var(--yellow);opacity:.8}
+.rail-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:9px;color:var(--muted);font-size:10px;line-height:1.7}
+.main{display:grid;grid-template-rows:auto 1fr auto;min-width:0;min-height:0}
+.top{padding:13px 22px 11px;border-bottom:1px solid var(--line);background:rgba(8,19,30,.6)}
+.eyebrow{font:10px/1 monospace;letter-spacing:.16em;color:var(--cyan)}
+.top h2{font-family:"Songti SC","SimSun",serif;font-size:20px;margin:6px 0 3px}
+.top p{margin:0;color:var(--muted);font-size:11px}
+.stage{position:relative;min-height:0;background:radial-gradient(circle at 50% 35%,#0d1e2c,#050d15 70%)}
+#scene{width:100%;height:100%;display:block;touch-action:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;transform:translate(-50%,-100%);background:rgba(5,13,21,.82);border:1px solid rgba(73,214,197,.35);padding:3px 6px;font:10px/1.4 monospace;color:#cfeee9;border-radius:2px;white-space:nowrap;display:none}
+#hint{position:absolute;left:14px;bottom:12px;font:10px monospace;color:rgba(219,231,240,.4)}
+.bottom{display:flex;align-items:center;gap:12px;padding:9px 16px;border-top:1px solid var(--line);background:rgba(8,19,30,.7)}
+.bottom .stepname{font-size:11px;color:var(--muted)}
+.bottom .keys{margin-left:auto;font:10px monospace;color:rgba(219,231,240,.35)}
+.btn{background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--text);padding:7px 12px;border-radius:2px;cursor:pointer;font:12px inherit}
+.btn:hover{border-color:rgba(73,214,197,.5);background:rgba(73,214,197,.06)}
+.panel{background:var(--panel);border-left:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:11px;overflow:auto;min-height:0}
+.panel-head{display:flex;justify-content:space-between;font:10px/1 monospace;letter-spacing:.12em;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:7px}
+.q{font-size:13px;line-height:1.7;color:var(--text);margin:0 0 8px}
+.block{font-size:11px;color:var(--muted);line-height:1.7;margin:0 0 7px}
+.block b{color:var(--text);font-weight:500}
+.ctrl-row{display:flex;flex-direction:column;gap:5px;margin-bottom:6px}
+.ctrl-row label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.ctrl-row label b{color:var(--text);font-family:monospace}
+input[type=range]{width:100%;accent-color:var(--yellow);height:4px}
+.mis{font-size:11px;color:var(--muted);line-height:1.7;border-left:2px solid var(--red);padding-left:8px;margin-top:auto}
+.mis b{color:var(--red);font-weight:500}
+.chart-wrap{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+.chart-title{font:10px/1 monospace;letter-spacing:.1em;color:var(--muted);margin-bottom:5px}
+#chart{width:100%;height:112px;display:block;background:rgba(255,255,255,.02);border:1px solid var(--line)}
+.quiz-q{font-size:12px;line-height:1.6;margin:0 0 7px}
+.quiz-opt{display:block;width:100%;text-align:left;background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--text);padding:8px 9px;margin-bottom:6px;cursor:pointer;font:12px inherit}
+.quiz-opt:hover{border-color:rgba(73,214,197,.5)}
+.quiz-opt.correct{border-color:rgba(73,214,197,.7);background:rgba(73,214,197,.1)}
+.quiz-opt.wrong{border-color:rgba(255,107,107,.7);background:rgba(255,107,107,.1)}
+.quiz-fb{font-size:11px;color:var(--muted);line-height:1.6;min-height:30px}
+@media(max-width:1100px){.app{grid-template-columns:190px 1fr 270px}.rail h1{font-size:18px}}
+@media(max-width:900px){.app{grid-template-columns:1fr 280px}.rail{display:none}}
+@media(max-width:720px){.app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto auto}.panel{max-height:40vh;border-left:0;border-top:1px solid var(--line)}.keys{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <span class="badge">初稿</span>
+    <h1>__TITLE__</h1>
+    <p>__BOOK__ · __CHAPTER__<br>教学示意初稿，需教师复核</p>
+    <nav id="steps"></nav>
+    <div class="rail-foot">场景：__SCENE__<br>数据/比例：教学示意<br>生成：知识点模型化初稿</div>
+  </aside>
+  <main class="main">
+    <header class="top">
+      <div class="eyebrow">知识点模型化 · 章节初稿 · __SCENE__</div>
+      <h2 id="coreQ">__COREQ__</h2>
+      <p id="summary">__SUMMARY__</p>
+    </header>
+    <section class="stage" id="stage">
+      <canvas id="scene"></canvas>
+      <div id="labels"></div>
+      <div id="hint">拖动旋转 · 滚轮缩放 · R 重置</div>
+    </section>
+    <footer class="bottom">
+      <button class="btn" id="prev">← 上一步</button>
+      <div class="stepname" id="stepName"></div>
+      <button class="btn" id="next">下一步 →</button>
+      <span class="keys">←/→ 切换步骤 · R 重置</span>
+    </footer>
+  </main>
+  <aside class="panel">
+    <div class="panel-head"><span>教学步骤</span><span id="stepIndex">1 / 6</span></div>
+    <div id="panelBody"></div>
+    <div class="mis" id="mis"></div>
+    <div class="chart-wrap"><div class="chart-title" id="chartTitle"></div><canvas id="chart" width="280" height="112"></canvas></div>
+  </aside>
+</div>
+<script>__THREE__</script>
+<script>window.CHAPTER_SPEC = __SPEC__;</script>
+<script>
+(function(){
+'use strict';
+const SPEC=window.CHAPTER_SPEC;
+const stage=document.getElementById('stage');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x050d15);
+const camera=new THREE.PerspectiveCamera(38,1,.1,100);const target=new THREE.Vector3(0,.8,0);let theta=-.9,phi=.95,radius=12;function updateCam(){camera.position.set(target.x+radius*Math.sin(phi)*Math.cos(theta),target.y+radius*Math.cos(phi),target.z+radius*Math.sin(phi)*Math.sin(theta));camera.lookAt(target);}updateCam();
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('scene'),antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputEncoding=THREE.sRGBEncoding;renderer.localClippingEnabled=true;
+scene.add(new THREE.HemisphereLight(0xd7e8ff,0x0a141c,1.0));const sun=new THREE.DirectionalLight(0xffe6c0,1.5);sun.position.set(-6,9,5);scene.add(sun);
+const fill=new THREE.DirectionalLight(0x8fb4cc,.4);fill.position.set(7,4,-4);scene.add(fill);
+const group=new THREE.Group();scene.add(group);
+const SRGB=h=>new THREE.Color(h).convertSRGBToLinear();
+const type=SPEC.sceneType||'generic';
+if(type==='coastal'){theta=2.35;phi=1.02;radius=15;}
+if(type==='fault'||type==='aeolian'||type==='river'){radius=13;}
+updateCam();
+let param=.55,updateScene=function(){},chartTitle='关键量变化',labels=[];
+const tagDefs=[{id:'a',text:SPEC.title||''},{id:'b',text:''}];const tags={};
+tagDefs.forEach(d=>{const el=document.createElement('div');el.className='tag';el.textContent=d.text;document.getElementById('labels').appendChild(el);tags[d.id]=el;});
+// ---------- scenes ----------
+function buildTerrain(){
+  const W=9,D=6,seg=110;
+  const geo=new THREE.PlaneGeometry(W,D,seg,Math.round(seg*D/W));geo.rotateX(-Math.PI/2);
+  const pos=geo.attributes.position,base=[],colors=[];
+  const ramp=['#3f5b46','#6b7c4f','#a79b62','#b08a62','#8a6b52','#efefea'];
+  function h(x,z){return .25+.22*Math.sin(x*1.3+1.2)*Math.cos(z*1.1+.5)+.12*Math.sin(x*2.9+2.2)*Math.cos(z*2.4+1.4)+.06*Math.sin(x*6.1)*Math.cos(z*5.3);}
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),y=h(x,z);base.push(y);pos.setY(i,y);const t=Math.min(.999,Math.max(0,y/1.1));const idx=Math.min(ramp.length-1,Math.floor(t*ramp.length));const c=SRGB(ramp[idx]);colors.push(c.r,c.g,c.b);}
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();
+  const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95}));group.add(mesh);
+  updateScene=function(v){const p=geo.attributes.position;for(let i=0;i<p.count;i++)p.setY(i,base[i]*(.4+v*1.2));p.needsUpdate=true;geo.computeVertexNormals();};
+  tags.a.textContent='地形起伏';labels=[{el:tags.a,pos:new THREE.Vector3(-2.1,1.4,0)},{el:tags.b,pos:new THREE.Vector3(2.2,.9,1.0)}];tags.b.textContent='等高线示意';
+  chartTitle='沿东西向的地形剖面';
+}
+function buildGlobe(){
+  const R=2.2;group.add(new THREE.Mesh(new THREE.SphereGeometry(R,48,32),new THREE.MeshStandardMaterial({color:SRGB('#3f6d76'),roughness:.85})));
+  const lm=new THREE.LineBasicMaterial({color:0xeef1ea,transparent:true,opacity:.3});
+  for(let lat=-60;lat<=60;lat+=30){const pts=[];const y=R*Math.sin(lat*Math.PI/180),r=R*Math.cos(lat*Math.PI/180);for(let a=0;a<=360;a+=6)pts.push(new THREE.Vector3(r*Math.cos(a*Math.PI/180),y,r*Math.sin(a*Math.PI/180)));group.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts),lm));}
+  for(let lon=0;lon<360;lon+=30){const pts=[];for(let la=-90;la<=90;la+=6){const r=R*Math.cos(la*Math.PI/180);pts.push(new THREE.Vector3(r*Math.cos(lon*Math.PI/180),R*Math.sin(la*Math.PI/180),r*Math.sin(lon*Math.PI/180)));}group.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts),lm));}
+  group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-3,0),new THREE.Vector3(0,3,0)]),new THREE.LineBasicMaterial({color:0xb45f2e})));
+  const sunBall=new THREE.Mesh(new THREE.SphereGeometry(.18,16,12),new THREE.MeshStandardMaterial({color:0xffd24a,emissive:0x6b4d00}));group.add(sunBall);
+  updateScene=function(v){const y=(v*2-1)*2.2;sunBall.position.set(3.4,y,1.2);sun.position.set(6,y*1.5,4);};
+  tags.a.textContent='地球';labels=[{el:tags.a,pos:new THREE.Vector3(0,2.6,0)},{el:tags.b,pos:new THREE.Vector3(2.6,1.2,0)}];tags.b.textContent='太阳方向（示意）';
+  chartTitle='昼长随纬度变化（示意）';
+}
+function buildAtmosphere(){
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(7,5),new THREE.MeshStandardMaterial({color:SRGB('#3d4a3a'),roughness:1}));ground.rotation.x=-Math.PI/2;group.add(ground);
+  const planes=[];for(let i=0;i<3;i++){const p=new THREE.Mesh(new THREE.PlaneGeometry(7-i*.6,5-i*.5),new THREE.MeshBasicMaterial({color:0x6fc8d8,transparent:true,opacity:.08+i*.02,side:THREE.DoubleSide}));p.rotation.x=-Math.PI/2;p.position.y=.7+i*.9;group.add(p);planes.push(p);}
+  const arrows=[];for(let i=0;i<5;i++){const a=new THREE.Mesh(new THREE.ConeGeometry(.09,.45,10),new THREE.MeshStandardMaterial({color:0xffd24a}));a.rotation.z=-Math.PI/2;a.position.set(-2.4+i*1.1,.35,0);group.add(a);arrows.push(a);}
+  updateScene=function(v){arrows.forEach((a,i)=>{a.scale.setScalar(.5+v*1.4);a.position.y=.3+v*.25;const c=v>.5?0xff8a4c:0x49d6c5;a.material.color=SRGB(c);});};
+  tags.a.textContent='近地面';labels=[{el:tags.a,pos:new THREE.Vector3(-2.2,.35,1.3)},{el:tags.b,pos:new THREE.Vector3(1.8,2.5,0)}];tags.b.textContent='大气层（示意）';
+  chartTitle='气温随高度变化（示意）';
+}
+function buildWater(){
+  const water=new THREE.Mesh(new THREE.PlaneGeometry(8,5),new THREE.MeshStandardMaterial({color:SRGB('#2f6f86'),roughness:.35,metalness:.1,transparent:true,opacity:.9}));water.rotation.x=-Math.PI/2;group.add(water);
+  const n=140,pts=new Float32Array(n*3);for(let i=0;i<n;i++){pts[i*3]=(Math.random()-.5)*7.6;pts[i*3+1]=.05;pts[i*3+2]=(Math.random()-.5)*4.6;}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pts,3));const p=new THREE.Points(g,new THREE.PointsMaterial({color:0xd8f3ff,size:.05,transparent:true,opacity:.8}));group.add(p);
+  updateScene=function(v){if(!p.userData.speed)p.userData.speed=v;else p.userData.speed=v;};
+  tags.a.textContent='水面';labels=[{el:tags.a,pos:new THREE.Vector3(-2.2,.25,1.2)},{el:tags.b,pos:new THREE.Vector3(2.2,.4,0)}];tags.b.textContent='流向（示意）';
+  chartTitle='径流量/降水年内变化（示意）';
+  p.userData.speed=.55;
+}
+function buildHuman(){
+  const bars=[];for(let i=0;i<5;i++)for(let j=0;j<5;j++){const h=.3+((i*7+j*11)%9)/10;const b=new THREE.Mesh(new THREE.BoxGeometry(.55,h,.55),new THREE.MeshStandardMaterial({color:SRGB(['#49d6c5','#ffd24a','#ff8a4c','#7d95a8','#8a6f5a'][(i+j)%5]),roughness:.7}));b.position.set((i-2)*.9,h/2,(j-2)*.9);group.add(b);bars.push({m:b,base:h});}
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(6.5,6.5),new THREE.MeshStandardMaterial({color:SRGB('#22303a')}));ground.rotation.x=-Math.PI/2;ground.position.y=-.01;group.add(ground);
+  updateScene=function(v){bars.forEach((b,i)=>{const h=b.base*(.5+v*1.4)*((i%4)?.85:1);b.m.scale.y=h/b.base;b.m.position.y=h/2;});};
+  tags.a.textContent='空间单元';labels=[{el:tags.a,pos:new THREE.Vector3(-2.4,1.8,0)},{el:tags.b,pos:new THREE.Vector3(2.4,1.4,0)}];tags.b.textContent='指标柱（示意）';
+  chartTitle='人口/产业指标（示意）';
+}
+
+function buildFault(){
+  // 地垒—地堑：三块连续岩体，岩层用顶点色表示，断层面倾向约 60°
+  const blockGroup=new THREE.Group();group.add(blockGroup);
+  const palette=['#6e4f3f','#8a5a3c','#a56f45','#bf8b52','#c9a86a','#8a8a5a','#5f6f58'];
+  function makeBlock(w,h,d){
+    // 用画布纹理画地层，避免方块顶点色渐变造成的“彩色积木”观感
+    const cv=document.createElement('canvas');cv.width=16;cv.height=280;const c2=cv.getContext('2d');
+    palette.slice().reverse().forEach((col,i)=>{const y0=280*i/7;c2.fillStyle=col;c2.fillRect(0,y0,16,280/7+1);c2.fillStyle='rgba(28,18,10,.4)';c2.fillRect(0,y0,16,2);});
+    const tex=new THREE.CanvasTexture(cv);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=4;
+    const side=new THREE.MeshStandardMaterial({map:tex,roughness:.92,metalness:.02});
+    const top=new THREE.MeshStandardMaterial({color:SRGB('#6d7a55'),roughness:.95});
+    const bottom=new THREE.MeshStandardMaterial({color:SRGB('#4a3a2c'),roughness:.95});
+    const g=new THREE.BoxGeometry(w,h,d,2,2,2);
+    return new THREE.Mesh(g,[side,side,top,bottom,side,side]);
+  }
+  const left=makeBlock(2.7,3.3,2.8);left.position.set(-2.95,0,0);left.rotation.z=-.05;blockGroup.add(left);
+  const mid=makeBlock(2.7,3.3,2.8);mid.position.set(0,-.06,0);blockGroup.add(mid);
+  const right=makeBlock(2.7,3.3,2.8);right.position.set(2.95,0,0);right.rotation.z=.05;blockGroup.add(right);
+  const planes=[],planeMat=new THREE.MeshBasicMaterial({color:0xffd24a,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false});
+  [-1.5,1.5].forEach((x,i)=>{const p=new THREE.Mesh(new THREE.PlaneGeometry(3.1,4.2),planeMat.clone());p.rotation.y=Math.PI/2;p.rotation.z=(i?1:-1)*.42;p.position.set(x,0,0);blockGroup.add(p);planes.push(p);});
+  const faultLineMat=new THREE.LineBasicMaterial({color:0xffd24a});
+  const faultLines=[-1.5,1.5].map(x=>{const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x,-2.1,1.42),new THREE.Vector3(x,2.1,1.42)]),faultLineMat);blockGroup.add(l);return l;});
+  const upMat=new THREE.MeshStandardMaterial({color:0x49d6c5,emissive:0x07332f}),downMat=new THREE.MeshStandardMaterial({color:0xff8a4c,emissive:0x3b1605});
+  const arrowsUp=[],arrowsDown=[];
+  for(let i=0;i<3;i++){
+    const a=new THREE.Mesh(new THREE.ConeGeometry(.1,.46,12),upMat);a.position.set(-2.9,-.8+i*.75,1.55);blockGroup.add(a);arrowsUp.push(a);
+    const b=new THREE.Mesh(new THREE.ConeGeometry(.1,.46,12),downMat);b.rotation.z=Math.PI;b.position.set(0,-.5+i*.75,1.55);blockGroup.add(b);arrowsDown.push(b);
+    const c=new THREE.Mesh(new THREE.ConeGeometry(.1,.46,12),upMat);c.position.set(2.9,-.8+i*.75,1.55);blockGroup.add(c);arrowsUp.push(c);
+  }
+  updateScene=function(v){
+    mid.position.y=-.06-v*1.05;
+    left.position.y=v*.16;right.position.y=v*.16;
+    planes.forEach(p=>p.material.opacity=.1+v*.16);
+    arrowsUp.forEach(a=>{a.position.y=-.95+v*.18;});
+    arrowsDown.forEach(a=>{a.position.y=-.65-v*.9;});
+    labels.forEach(l=>{if(l.key==='mid')l.pos.y=-.1-v*1.05;});
+  };
+  tags.a.textContent='地垒：岩块相对上升';tags.b.textContent='地堑：岩块相对下降';
+  group.scale.setScalar(.92);group.position.y=.28;
+  labels=[{el:tags.a,key:'side',pos:new THREE.Vector3(-3.0,2.1,1.5)},{el:tags.b,key:'mid',pos:new THREE.Vector3(0,-.3,1.55)}];
+  chartTitle='断块位移量随伸展强度变化';
+  group.userData.tick=function(){const t=performance.now()*.002;faultLineMat.opacity=.65+.25*Math.sin(t);};
+}
+function buildRiver(){
+  // 上游 V 形谷 → 下游曲流：河床居中，凹岸深、凸岸浅，水面用带状网格
+  const W=10,D=5,sx=150,sz=80;
+  const geo=new THREE.PlaneGeometry(W,D,sx,sz);geo.rotateX(-Math.PI/2);
+  const pos=geo.attributes.position,colors=[];
+  const zc=x=>1.0*Math.sin(x*.6)+.38*Math.sin(x*1.5+.7)*(1-Math.min(1,Math.abs(x)/6));
+  function riverWidth(x){const upper=Math.max(0,Math.min(1,(2-x)/7));return .45+(1-upper)*.5;}
+  function waterY(x){const upper=Math.max(0,Math.min(1,(2-x)/7));return .18-.02*x-(.45+upper*.55)*.95;}
+  function h(x,z){
+    const w=riverWidth(x),d=Math.abs(z-zc(x))/w;
+    const upper=Math.max(0,Math.min(1,(2-x)/7)),depth=.45+upper*.55;
+    const prof=d<.6?1:Math.exp(-Math.pow((d-.6)*1.3,2));
+    return .18-.02*x-depth*prof+.02*Math.sin(x*1.7+z*2.3);
+  }
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),z=pos.getZ(i),y=h(x,z);pos.setY(i,y);
+    const wy=waterY(x),d=Math.abs(z-zc(x))/riverWidth(x);
+    let c;
+    if(d<.62)c=SRGB('#5a7364');
+    else if(d<1.0&&y<.12)c=SRGB('#c2a565');
+    else if(y<.2)c=SRGB('#7d8a5e');
+    else c=SRGB('#8c7a55');
+    colors.push(c.r,c.g,c.b);
+  }
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();
+  group.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.96,emissive:0x0d1713,emissiveIntensity:.55})));
+  // 水面带
+  const wpts=[],widx=[];let n=0;
+  for(let i=0;i<=120;i++){
+    const x=-5+10*i/120,c=zc(x),wy=waterY(x),half=riverWidth(x)*.72;
+    const dz=(zc(x+.02)-zc(x-.02))/.04,len=Math.sqrt(1+dz*dz);
+    const nx=-dz/len,nz=1/len;
+    wpts.push(x+nx*half,wy+.01,c+nz*half,x-nx*half,wy+.01,c-nz*half);widx.push(n,n+1,n+2,n+1,n+3,n+2);n+=2;
+  }
+  const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.Float32BufferAttribute(wpts,3));wg.setIndex(widx);wg.computeVertexNormals();
+  const water=new THREE.Mesh(wg,new THREE.MeshBasicMaterial({color:SRGB('#3aa7c4'),transparent:true,opacity:.9,side:THREE.DoubleSide}));group.add(water);
+  const pn=180,pp=new Float32Array(pn*3),px=[];
+  for(let i=0;i<pn;i++){const x=-4.9+Math.random()*9.8;px.push(x);pp[i*3]=x;pp[i*3+1]=waterY(x)+.05;pp[i*3+2]=zc(x)+(Math.random()-.5)*riverWidth(x)*.6;}
+  const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pp,3));
+  const particles=new THREE.Points(pg,new THREE.PointsMaterial({color:0xd8f3ff,size:.06,transparent:true,opacity:.8}));group.add(particles);
+  updateScene=function(v){particles.userData.speed=.5+v*2.2;water.material.opacity=.85+v*.12;};
+  particles.userData.speed=.9;
+  tags.a.textContent='上游 V 形谷 / 下切侵蚀';tags.b.textContent='下游曲流 / 凸岸堆积';
+  labels=[{el:tags.a,pos:new THREE.Vector3(-3.1,1.0,1.6)},{el:tags.b,pos:new THREE.Vector3(2.4,.4,1.6)}];
+  chartTitle='沿河纵剖面与流速变化';
+  group.userData.tick=function(dt){const a=particles.geometry.attributes.position,sp=(particles.userData.speed||.9)*dt*1.6;for(let i=0;i<a.count;i++){let x=a.getX(i)+sp;if(x>5)x=-5;a.setX(i,x);a.setY(i,waterY(x)+.06);a.setZ(i,a.getZ(i)*.9+zc(x)*.1+(Math.random()-.5)*.02);}a.needsUpdate=true;};
+}
+function buildCoastal(){
+  // 连续海岸剖面：海蚀平台—崖脚凹槽—海蚀崖—台地，崖体后退时平台展宽
+  const land=new THREE.Group();group.add(land);
+  const shape=new THREE.Shape();
+  shape.moveTo(-4.7,-1.15);shape.lineTo(-2.2,-1.0);shape.lineTo(-1.45,-.55);shape.lineTo(-1.1,-.3);
+  shape.lineTo(-.95,-.26);shape.lineTo(-.98,-.02);shape.lineTo(-.7,-.12);shape.lineTo(-.66,.3);
+  shape.lineTo(-.55,1.1);shape.lineTo(-.48,1.5);shape.lineTo(-.25,1.62);shape.lineTo(1.4,1.74);shape.lineTo(4.7,1.88);
+  shape.lineTo(4.7,-1.15);shape.closePath();
+  const geo=new THREE.ExtrudeGeometry(shape,{depth:4.2,bevelEnabled:false});geo.translate(0,0,-2.1);
+  const pos=geo.attributes.position,cols=[];
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),y=pos.getY(i);let c;
+    if(y>1.55)c=SRGB(x>-.3?'#7b8a5e':'#8a7a58');
+    else if(y>.3)c=SRGB('#8f7a63');
+    else if(y>-.2)c=SRGB('#a08a6d');
+    else if(y>-.45)c=SRGB('#6f6a5f');
+    else c=SRGB('#4f5e5c');
+    cols.push(c.r,c.g,c.b);
+  }
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));geo.computeVertexNormals();
+  land.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,metalness:.01})));
+  const strataPts=[];
+  [[1.05,-.55],[.45,-.7],[-.15,-.68],[-.75,-1.85]].forEach(([y,x0])=>{[-2.11,2.11].forEach(z=>{strataPts.push(new THREE.Vector3(x0,y,z),new THREE.Vector3(4.7,y,z));});});
+  land.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(strataPts),new THREE.LineBasicMaterial({color:0x4a3c2c,transparent:true,opacity:.5})));
+  group.scale.setScalar(.94);
+  const platformGeo=new THREE.BoxGeometry(1.75,.16,4.0);platformGeo.translate(.875,0,0);
+  const platform=new THREE.Mesh(platformGeo,new THREE.MeshStandardMaterial({color:SRGB('#6c655d'),roughness:.98}));platform.position.set(-2.39,-.24,0);group.add(platform);
+  const notch=new THREE.Mesh(new THREE.PlaneGeometry(1.9,.6),new THREE.MeshBasicMaterial({color:0x0a1518,transparent:true,opacity:.95,side:THREE.DoubleSide}));notch.rotation.y=Math.PI/2;notch.position.set(-.68,.0,0);land.add(notch);
+  const stack=new THREE.Mesh(new THREE.CylinderGeometry(.27,.33,1.45,10),new THREE.MeshStandardMaterial({color:SRGB('#93856f'),roughness:.95}));stack.rotation.z=.03;stack.position.set(-2.05,.53,1.0);group.add(stack);
+  const sea=new THREE.Mesh(new THREE.PlaneGeometry(4.4,5.4),new THREE.MeshStandardMaterial({color:SRGB('#2f7890'),roughness:.26,metalness:.14,transparent:true,opacity:.86}));sea.rotation.x=-Math.PI/2;sea.position.set(-2.35,-.2,0);group.add(sea);
+  const n=140,pp=new Float32Array(n*3);
+  for(let i=0;i<n;i++){pp[i*3]=-4.5+Math.random()*3.9;pp[i*3+1]=-.16+Math.random()*.06;pp[i*3+2]=(Math.random()-.5)*5.2;}
+  const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.BufferAttribute(pp,3));
+  const waves=new THREE.Points(wg,new THREE.PointsMaterial({color:0xd8f3ff,size:.06,transparent:true,opacity:.78}));group.add(waves);waves.userData.speed=.8;
+  updateScene=function(v){
+    land.position.x=v*.72;
+    platform.scale.x=1+v*.7;
+    notch.scale.set(1+v*.7,1+v*.55,1);
+    waves.userData.speed=.55+v*2.3;
+    stack.position.y=.55-v*.1;
+    labels.forEach(l=>{if(l.key==='cliff')l.pos.x=-.56+v*.72;});
+    group.userData.windStrength=v;
+  };
+  tags.a.textContent='海蚀崖';tags.b.textContent='海蚀平台';
+  labels=[{el:tags.a,key:'cliff',pos:new THREE.Vector3(-.56,1.2,1.6)},{el:tags.b,pos:new THREE.Vector3(-1.55,-.18,1.6)}];
+  chartTitle='崖壁后退距离随侵蚀强度变化';
+  group.userData.tick=function(dt){const a=waves.geometry.attributes.position,sp=(waves.userData.speed||.8)*dt;for(let i=0;i<a.count;i++){let x=a.getX(i)+sp;if(x>.1)x=-4.6;a.setX(i,x);a.setZ(i,a.getZ(i)*.995+(Math.random()-.5)*.012);}a.needsUpdate=true;};
+}
+
+function buildAeolian(){
+  const W=10,D=6,sx=120,sz=72,geo=new THREE.PlaneGeometry(W,D,sx,sz);geo.rotateX(-Math.PI/2);
+  const pos=geo.attributes.position,colors=[];
+  function dune(x,z){const u=((x*.3+z*.04)%1+1)%1;const t=u<.7?u/.7:(1-u)/.3;return .12+.66*Math.pow(Math.max(0,t),1.1)+.04*Math.sin(z*2.3+x*1.7)+.015*Math.sin(x*6.1+z*3.3);}
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),y=dune(x,z);pos.setY(i,y);const c=SRGB(y>.55?'#d6b36c':(y>.28?'#c79a59':'#a87948'));colors.push(c.r,c.g,c.b);}
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();const duneMesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));group.add(duneMesh);
+  const n=180,pp=new Float32Array(n*3);for(let i=0;i<n;i++){pp[i*3]=-5+Math.random()*10;pp[i*3+1]=.55+Math.random()*.8;pp[i*3+2]=(Math.random()-.5)*5.4;}
+  const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.BufferAttribute(pp,3));const wind=new THREE.Points(wg,new THREE.PointsMaterial({color:0xf4d892,size:.055,transparent:true,opacity:.72}));group.add(wind);wind.userData.speed=1.3;
+  const arrows=[];for(let i=0;i<4;i++){const a=new THREE.Mesh(new THREE.ConeGeometry(.09,.4,10),new THREE.MeshStandardMaterial({color:0xffd24a}));a.rotation.z=-Math.PI/2;a.position.set(-2.6+i*1.4,1.1+.07*i,1.9);group.add(a);arrows.push(a);}
+  updateScene=function(v){wind.userData.speed=.55+v*2.6;arrows.forEach((a,i)=>{a.scale.setScalar(.65+v*.8);a.position.x=-3.1+i*(1.1+v*.35);});duneMesh.scale.y=.75+v*.45;group.userData.windStrength=v;};
+  tags.a.textContent='迎风坡 / 缓坡';labels=[{el:tags.a,pos:new THREE.Vector3(-1.7,.8,1.6)},{el:tags.b,pos:new THREE.Vector3(1.9,.9,1.6)}];tags.b.textContent='背风坡 / 陡坡';
+  group.scale.setScalar(.88);group.position.y=.12;
+  chartTitle='风速与沙丘迁移速度';
+  group.userData.tick=function(dt){const a=wind.geometry.attributes.position,sp=(wind.userData.speed||1.3)*dt;for(let i=0;i<a.count;i++){let x=a.getX(i)+sp;if(x>5)x=-5;a.setX(i,x);a.setZ(i,a.getZ(i)*.997+(Math.random()-.5)*.016);}a.needsUpdate=true;group.rotation.y=(group.userData.windStrength||.5)*.08;};
+}
+function buildGeneric(){
+  const cols=['#49d6c5','#ffd24a','#ff8a4c','#7d95a8','#6b7f5a'];
+  for(let i=0;i<5;i++){const m=new THREE.Mesh(new THREE.CylinderGeometry(.32,.4,.9+ i*.15,16),new THREE.MeshStandardMaterial({color:SRGB(cols[i]),roughness:.7}));m.position.set((i-2)*1.1,.45,0);group.add(m);}
+  updateScene=function(v){group.rotation.y=v*.5;};
+  tags.a.textContent=SPEC.title||'知识点';labels=[{el:tags.a,pos:new THREE.Vector3(0,1.7,0)},{el:tags.b,pos:new THREE.Vector3(2.2,1.1,0)}];tags.b.textContent='要素示意';
+  chartTitle='关键要素对比（示意）';
+}
+({terrain:buildTerrain,globe:buildGlobe,atmosphere:buildAtmosphere,water:buildWater,human:buildHuman,fault:buildFault,river:buildRiver,aeolian:buildAeolian,coastal:buildCoastal,generic:buildGeneric}[type]||buildGeneric)();
+updateScene(param);
+// ---------- chart ----------
+const chart=document.getElementById('chart'),ctx=chart.getContext('2d');
+function drawChart(){
+  const w=chart.width,h=chart.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='rgba(255,255,255,.015)';ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle='rgba(120,180,220,.14)';for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(8,h*i/4);ctx.lineTo(w-8,h*i/4);ctx.stroke();}
+  function line(vals,color,fixedMax){const mn=0,mx=fixedMax||Math.max(...vals),dy=mx-mn||1;ctx.beginPath();vals.forEach((v,i)=>{const x=10+(w-20)*i/(vals.length-1),y=h-14-(h-24)*Math.min(1,(v-mn)/dy);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.strokeStyle=color;ctx.lineWidth=1.6;ctx.stroke();}
+  function mark(){const x=10+(w-20)*Math.max(0,Math.min(1,param));ctx.save();ctx.setLineDash([3,3]);ctx.strokeStyle='rgba(255,210,74,.6)';ctx.beginPath();ctx.moveTo(x,10);ctx.lineTo(x,h-14);ctx.stroke();ctx.restore();}
+  if(type==='terrain'){const vals=[];for(let i=0;i<=60;i++){const x=-4.5+9*i/60;vals.push(.25+.22*Math.sin(x*1.3+1.2)+.12*Math.sin(x*2.9+2.2));}line(vals,'#49d6c5');}
+  else if(type==='globe'){const vals=[];for(let la=-80;la<=80;la+=5)vals.push(12+8*Math.sin(la*Math.PI/180));line(vals,'#ffd24a');ctx.fillStyle='#7d95a8';ctx.font='9px monospace';ctx.fillText('北 → 南',10,12);}
+  else if(type==='atmosphere'){const vals=[];for(let a=0;a<=10;a++)vals.push(18-6.5*a);line(vals,'#ff8a4c');ctx.fillStyle='#7d95a8';ctx.font='9px monospace';ctx.fillText('地面 → 高空',10,12);}
+  else if(type==='water'){const vals=[18,22,30,42,60,86,120,108,92,64,38,24];const mx=120;vals.forEach((v,i)=>{const bw=(w-24)/12;const bh=(h-30)*v/mx;ctx.fillStyle='#49d6c5';ctx.fillRect(12+i*bw,h-14-bh,bw*.65,bh);});ctx.fillStyle='#7d95a8';ctx.font='9px monospace';ctx.fillText('1–12 月',10,12);}
+  else if(type==='fault'){const down=[],up=[];for(let i=0;i<=50;i++){const x=i/50;down.push(.15+.95*Math.pow(x,1.35));up.push(.08+.22*x);}line(down,'#ff8a4c',1.15);line(up,'#49d6c5',1.15);mark();ctx.fillStyle='#7d95a8';ctx.font='9px monospace';ctx.fillText('地堑下移',10,12);ctx.fillStyle='#49d6c5';ctx.fillText('地垒抬升',w-58,12);}
+  else if(type==='river'){const vals=[];for(let i=0;i<=60;i++){const x=-4.5+9*i/60;vals.push((1.35-.085*x+.12*Math.sin(x*1.2))*(.7+param*.6));}line(vals,'#49d6c5');mark();ctx.fillStyle='#7d95a8';ctx.font='9px monospace';ctx.fillText('上游 → 下游',10,12);}
+  else if(type==='aeolian'){const vals=[];for(let i=0;i<=50;i++){const x=i/50;vals.push(.08+.78*Math.pow(x,1.8)+.03*Math.sin(x*18));}line(vals,'#ffd24a',1);mark();ctx.fillStyle='#7d95a8';ctx.font='9px monospace';ctx.fillText('风速 → 迁移',10,12);}
+  else if(type==='coastal'){const vals=[];for(let i=0;i<=50;i++){const x=i/50;vals.push(.12+.8*(1-Math.exp(-x*3.2)));}line(vals,'#49d6c5',1);mark();ctx.fillStyle='#7d95a8';ctx.font='9px monospace';ctx.fillText('侵蚀时间',10,12);}
+  else {const vals=[.35,.5,.65,.45,.75];vals.forEach((v,i)=>{const bw=(w-24)/5;ctx.fillStyle=['#49d6c5','#ffd24a','#ff8a4c','#7d95a8','#6b7f5a'][i];ctx.fillRect(12+i*bw,h-14-(h-30)*v,bw*.7,(h-30)*v);});}
+  ctx.fillStyle='#7d95a8';ctx.font='9px monospace';if(type==='terrain')ctx.fillText('西 → 东',w-52,12);if(type==='globe')ctx.fillText('昼长',w-30,12);if(type==='atmosphere')ctx.fillText('℃',w-18,12);
+  if(type==='fault'||type==='river'||type==='aeolian'||type==='coastal'){ctx.fillStyle='rgba(255,210,74,.85)';ctx.font='9px monospace';ctx.fillText('当前 '+Math.round(param*100)+'%',10,h-2);}
+}
+// ---------- steps ----------
+const steps=SPEC.steps||[];let idx=0;
+const stepsNav=document.getElementById('steps');
+steps.forEach((s,i)=>{const b=document.createElement('button');b.className='step';b.innerHTML='<span class="n">0'+(i+1)+'</span><span>'+(s.name||'步骤')+'</span>';b.addEventListener('click',()=>setStep(i));stepsNav.appendChild(b);});
+function setStep(i){
+  idx=Math.max(0,Math.min(steps.length-1,i));const s=steps[idx]||{};
+  document.querySelectorAll('.step').forEach((b,bi)=>b.classList.toggle('active',bi===idx));
+  document.getElementById('stepIndex').textContent=(idx+1)+' / '+(steps.length||6);
+  document.getElementById('stepName').textContent=s.name||'';
+  document.getElementById('chartTitle').textContent=chartTitle;
+  const panel=document.getElementById('panelBody');
+  if(idx===steps.length-1&&SPEC.quiz){renderQuiz(panel);}
+  else{panel.innerHTML='<p class="q">'+(s.title||'')+'</p>'+
+    '<p class="block"><b>问：</b>'+(s.question||'')+'</p>'+
+    '<p class="block"><b>做：</b>'+(s.action||'')+'</p>'+
+    '<p class="block"><b>看：</b>'+(s.observation||'')+'</p>'+
+    '<p class="block"><b>结论：</b>'+(s.conclusion||'')+'</p>'+
+    '<p class="block"><b>数据锚点：</b>'+(s.anchor||'')+'</p>';}
+  document.getElementById('mis').innerHTML='<b>常见误区：</b>'+(SPEC.misconceptions||[]).join('；');
+  if(typeof s.param==='number'){param=Math.max(0,Math.min(1,s.param/100));slider.value=Math.round(param*100);const pv=document.getElementById('pv');if(pv)pv.textContent=Math.round(param*100)+'%';updateScene(param);}
+  drawChart();
+}
+function renderQuiz(panel){
+  let qi=0,score=0;
+  function render(){if(qi>=SPEC.quiz.length){panel.innerHTML='<p class="q">完成：'+score+' / '+SPEC.quiz.length+'</p><p class="quiz-fb">'+(score===SPEC.quiz.length?'全对。':'再回看前面的步骤，然后重试。')+'</p>';return;}
+    const q=SPEC.quiz[qi];panel.innerHTML='<p class="quiz-q">'+(qi+1)+'. '+q.q+'</p>'+q.options.map((o,i)=>'<button class="quiz-opt" data-i="'+i+'">'+String.fromCharCode(65+i)+'. '+o+'</button>').join('')+'<div class="quiz-fb" id="qfb"></div>';
+    panel.querySelectorAll('.quiz-opt').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.i,ok=i===q.answer;panel.querySelectorAll('.quiz-opt').forEach((x,xi)=>{x.classList.toggle('correct',xi===q.answer);x.classList.toggle('wrong',xi===i&&!ok);});document.getElementById('qfb').textContent=(ok?'正确。':'不对。')+(q.explain||'');if(ok)score++;setTimeout(()=>{qi++;render();},1100);}));}
+  render();
+}
+// ---------- controls ----------
+document.getElementById('prev').addEventListener('click',()=>setStep(idx-1));
+document.getElementById('next').addEventListener('click',()=>setStep(idx+1));
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')setStep(idx+1);else if(e.key==='ArrowLeft')setStep(idx-1);else if(e.key==='r'||e.key==='R'){theta=-.9;phi=.95;radius=12;updateCam();}});
+// slider
+const slider=document.createElement('input');slider.type='range';slider.min='0';slider.max='100';slider.value='55';
+const sliderRow=document.createElement('div');sliderRow.className='ctrl-row';const lab=document.createElement('label');lab.innerHTML='场景参数 <b id="pv">55%</b>';sliderRow.appendChild(lab);sliderRow.appendChild(slider);
+const panelBody=document.getElementById('panelBody');
+// insert slider before mis (keep per-step content updated)
+const sliderHost=document.createElement('div');sliderHost.id='sliderHost';sliderHost.appendChild(sliderRow);
+document.getElementById('mis').parentNode.insertBefore(sliderHost,document.getElementById('mis'));
+slider.addEventListener('input',e=>{param=+e.target.value/100;document.getElementById('pv').textContent=Math.round(param*100)+'%';updateScene(param);drawChart();});
+updateScene(param);
+// camera drag
+const el=renderer.domElement;let drag=false,lx=0,ly=0;
+el.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;el.setPointerCapture(e.pointerId);});
+el.addEventListener('pointermove',e=>{if(!drag)return;theta-=(e.clientX-lx)*.006;phi=Math.max(.3,Math.min(1.4,phi-(e.clientY-ly)*.005));lx=e.clientX;ly=e.clientY;updateCam();});
+el.addEventListener('pointerup',()=>{drag=false;});el.addEventListener('pointercancel',()=>{drag=false;});
+el.addEventListener('wheel',e=>{e.preventDefault();radius=Math.max(6,Math.min(22,radius+e.deltaY*.012));updateCam();},{passive:false});
+// labels + resize + loop
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}new ResizeObserver(resize).observe(stage);resize();
+function project(){const r=stage.getBoundingClientRect();labels.forEach(l=>{const v=l.pos.clone().project(camera);if(v.z>1){l.el.style.display='none';return;}l.el.style.display='block';l.el.style.left=((v.x*.5+.5)*r.width)+'px';l.el.style.top=((-v.y*.5+.5)*r.height)+'px';});}
+const clock=new THREE.Clock();
+function loop(){requestAnimationFrame(loop);const dt=clock.getDelta();if(type==='globe')group.rotation.y+=dt*.25;if(type==='water'){const p=group.children.find(x=>x.isPoints);if(p){const a=p.geometry.attributes.position;const sp=(p.userData.speed||.55)*dt*2.2;for(let i=0;i<a.count;i++){let x=a.getX(i)+sp;if(x>3.8)x=-3.8;a.setX(i,x);}a.needsUpdate=true;}}if(group.userData.tick)group.userData.tick(dt);renderer.render(scene,camera);project();}
+setStep(0);loop();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>东问西问 · 课件库</title>
+<meta name="description" content="东问西问 XW GEO 三维可视化课件库：冰川、海岸、河流、风沙、断层等交互课件，单文件离线可用。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23060f14'/%3E%3Cpath d='M14 18 L30 46 M30 18 L14 46' stroke='%235fe3ff' stroke-width='3.4' stroke-linecap='round' fill='none'/%3E%3Cpath d='M34 18 L40 46 L46 28 L52 46' stroke='%23ffb26b' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-locked">
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
+<div class="auth" id="auth">
+  <div class="auth-glow" aria-hidden="true"></div>
+  <div class="auth-card" id="authCard">
+    <div class="auth-brand">
+      <span class="auth-mark"><svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><rect x="1.5" y="1.5" width="45" height="45" rx="13" fill="none" stroke="rgba(95,227,255,.35)" stroke-width="1.2"/><path d="M11 13 L23 33 M23 13 L11 33" fill="none" stroke="#5fe3ff" stroke-width="2.4" stroke-linecap="round"/><path d="M26 13 L30.5 33 L35 21 L39.5 33" fill="none" stroke="#ffb26b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23" cy="23" r="1.6" fill="#a9f2ff"/></svg></span>
+      <span class="auth-brand__text"><b>东问西问</b><i>XW GEO LAB</i></span>
+    </div>
+    <div class="auth-eyebrow">ACCESS CONTROL · 访问验证</div>
+    <h2>进入课件库</h2>
+    <p>请输入授权用户名与密码。仅限课堂使用者访问。</p>
+    <form id="authForm" autocomplete="on">
+      <label class="auth-field"><span>用户名</span><input id="authUser" name="username" autocomplete="username" placeholder="zxw / zdw" spellcheck="false"></label>
+      <label class="auth-field"><span>密码 / 密钥</span><span class="auth-pass"><input id="authPass" name="password" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" class="auth-eye" id="authEye" aria-label="显示密码">显示</button></span></label>
+      <div class="auth-error" id="authError" role="alert"></div>
+      <button class="cover-cta auth-submit" id="authSubmit" type="submit"><span>验证并进入</span><span class="cover-cta__arrow">→</span></button>
+    </form>
+    <div class="auth-foot">登录状态保留 7 天 · 仅限授权设备</div>
+  </div>
+</div>
+<div class="cover" id="cover">
+  <div class="cover-grid" aria-hidden="true"></div>
+  <header class="cover-top">
+    <div class="cover-brand">
+      <span class="cover-brand__mark" aria-hidden="true"><svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><rect x="1.5" y="1.5" width="45" height="45" rx="13" fill="none" stroke="rgba(95,227,255,.35)" stroke-width="1.2"/><path d="M11 13 L23 33 M23 13 L11 33" fill="none" stroke="#5fe3ff" stroke-width="2.4" stroke-linecap="round"/><path d="M26 13 L30.5 33 L35 21 L39.5 33" fill="none" stroke="#ffb26b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23" cy="23" r="1.6" fill="#a9f2ff"/></svg></span>
+      <span class="cover-brand__name">东问西问</span>
+      <span class="cover-brand__sub">XW GEO LAB</span>
+    </div>
+    <div class="cover-topmeta"><span class="cover-dot"></span>课件库已上线 · v0.4</div>
+  </header>
+  <main class="cover-main">
+    <div class="cover-copy">
+      <div class="eyebrow">INTERACTIVE GEOGRAPHY · COURSEWARE</div>
+      <h1 id="coverTitle">让地理课<br>可以<em>转动</em>。</h1>
+      <p>冰川、海岸、河流、风沙、断层与洋流。每一章都是单文件交互课件，打开就能投屏，断网也能用。</p>
+      <div class="cover-actions">
+        <button class="cover-cta" id="startBtn"><span>开始使用</span><span class="cover-cta__arrow">→</span></button>
+        <span class="cover-hint">按 Enter 进入</span>
+      </div>
+      <div class="cover-stats">
+        <div><b class="cover-count">12</b><span>章课件</span></div>
+        <div><b>6</b><span>步课堂</span></div>
+        <div><b>100%</b><span>离线可用</span></div>
+      </div>
+    </div>
+    <div class="cover-visual">
+      <canvas id="coverGlobe" aria-hidden="true"></canvas>
+      
+      
+      
+      <div class="cover-orbit" aria-hidden="true"></div>
+    </div>
+  </main>
+  <footer class="cover-foot">
+    <span>单文件 · 离线 · 可投屏</span>
+    <span>当前仅开放课件库</span>
+  </footer>
+</div>
+<div class="aurora" aria-hidden="true"><span class="aurora-blob b1"></span><span class="aurora-blob b2"></span><span class="aurora-blob b3"></span><span class="aurora-grain"></span></div>
+<div class="app" id="app">
+  <aside class="rail" id="rail" aria-label="主导航">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><rect x="1.5" y="1.5" width="45" height="45" rx="13" fill="none" stroke="rgba(95,227,255,.35)" stroke-width="1.2"/><path d="M11 13 L23 33 M23 13 L11 33" fill="none" stroke="#5fe3ff" stroke-width="2.4" stroke-linecap="round"/><path d="M26 13 L30.5 33 L35 21 L39.5 33" fill="none" stroke="#ffb26b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23" cy="23" r="1.6" fill="#a9f2ff"/></svg></div>
+      <div>
+        <div class="brand-name">东问西问</div>
+        <div class="brand-sub">XW GEO LAB</div>
+      </div>
+    </div>
+
+    <nav class="rail-nav">
+      <div class="rail-group">课件资源</div>
+      <button class="rail-item active" data-view="library">
+        <span class="rail-code">A</span><span>课件库</span>
+        <span class="rail-count" id="railModelCount">12</span>
+      </button>
+
+      <div class="rail-group">教学工具 · 敬请期待</div>
+      <button class="rail-item locked" data-view="analysis">
+        <span class="rail-code">01</span><span>识图分析</span>
+      </button>
+      <button class="rail-item locked" data-view="knowledge">
+        <span class="rail-code">02</span><span>知识点模型化</span>
+      </button>
+      <button class="rail-item locked" data-view="question">
+        <span class="rail-code">03</span><span>题目模型化</span>
+      </button>
+      <button class="rail-item locked" data-view="courseware">
+        <span class="rail-code">04</span><span>课件编排</span>
+      </button>
+      <button class="rail-item locked" data-view="prep">
+        <span class="rail-code">05</span><span>备课包</span>
+      </button>
+    </nav>
+
+    <div class="rail-foot">
+      <div class="rail-note">课件库已开放 · v0.4</div>
+      <div class="rail-note subtle">其他教学工具正在打磨</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn rail-toggle" id="railToggle" aria-label="打开导航">☰</button>
+        <div class="crumbs">
+          <span class="crumbs-root">东问西问</span>
+          <span class="crumbs-sep">/</span>
+          <span id="crumbs">工作台</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="status"><span class="status-dot"></span><span id="statusText">课件库已开放 · 其他功能敬请期待</span></span>
+        <button class="btn btn-ghost btn-sm" id="helpBtn">使用说明</button>
+        <div class="user-wrap">
+          <button class="avatar" id="avatarBtn" title="账户">XW</button>
+          <div class="user-pop" id="userPop" hidden>
+            <div class="user-pop__head">已登录 <b id="userLabel">—</b></div>
+            <button class="user-pop__out" id="logoutBtn">退出登录</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="view" id="view" tabindex="-1"></main>
+  </div>
+</div>
+
+<!-- 模型详情 / 帮助 共用弹窗 -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-scrim" data-close-modal></div>
+  <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <header class="modal-head">
+      <div>
+        <div class="eyebrow" id="modalEyebrow"></div>
+        <h2 id="modalTitle"></h2>
+      </div>
+      <button class="icon-btn" data-close-modal aria-label="关闭">×</button>
+    </header>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- 课堂演示模式 -->
+<div class="classroom" id="classroom" hidden>
+  <header class="classroom-head">
+    <div class="classroom-title" id="classroomTitle"></div>
+    <div class="classroom-actions">
+      <span class="classroom-counter" id="classroomCounter"></span>
+      <button class="btn btn-onink btn-sm" id="classroomClose">退出演示 <kbd>Esc</kbd></button>
+    </div>
+  </header>
+  <div class="classroom-stage" id="classroomStage"></div>
+  <footer class="classroom-foot">
+    <button class="btn btn-onink" id="classroomPrev">← 上一页</button>
+    <div class="classroom-dots" id="classroomDots"></div>
+    <button class="btn btn-onink" id="classroomNext">下一页 →</button>
+  </footer>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<div class="rail-scrim" id="railScrim" hidden></div>
+
+<noscript><p style="padding:24px">本页面需要启用 JavaScript。</p></noscript>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="vendor/mayon_factory.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="knowledge-export.js"></script>
+</body>
+</html>
