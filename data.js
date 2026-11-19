@@ -616,6 +616,21 @@ window.GEO_DATA = {
         "U 形谷"
       ],
       "meta": "6 步 · 用户建模"
+    },
+    {
+      "id": "CH13",
+      "category": "地貌",
+      "title": "丹霞地貌的形成",
+      "summary": "用用户提供的丹霞山体建模，叠加垂直节理、流水下切、洞穴扩展与崩塌：拖动侵蚀时间，看红层台地怎样被切成峡谷、陡崖、岩龛与石柱。",
+      "href": "chapters/ch13.html",
+      "preview": "chapters/previews/ch13.png",
+      "tags": [
+        "用户建模",
+        "红层",
+        "丹霞崖壁",
+        "石柱"
+      ],
+      "meta": "6 步 · 用户建模"
     }
   ]
 };
