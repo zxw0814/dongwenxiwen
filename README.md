@@ -1,5 +1,7 @@
 # 东问西问 · XW GEO 课件库
 
+线上地址：<https://zxw0814.github.io/dongwenxiwen/>
+
 静态站点，可直接部署到 Cloudflare Pages / GitHub Pages / 任意静态托管。
 
 - 首页：`index.html`（登录 → 封面 → 课件库）
